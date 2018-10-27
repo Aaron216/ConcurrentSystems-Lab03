@@ -24,11 +24,17 @@ int main(int argc, char* argv[]) {
     long long int number_in_circle;
     long long int number_of_tosses;
 
-    thread_count = strtol(argv[1], NULL, 10);  
+    // Check correct number of arguments
+    if (argc != 3) {
+        printf("Incorrect number of arguments.\n");
+        printf("%s <# of threads> <# of tosses>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    thread_count = strtol(argv[1], NULL, 10);
     number_of_tosses = strtoll(argv[2], NULL, 10);
 
-    number_in_circle = 0;
-    {
+    number_in_circle = 0; {
         int my_rank = omp_get_thread_num();
         unsigned seed = my_rank + 1;
         long long int toss;
