@@ -1,10 +1,10 @@
-/* File:      lab3part4.c
- * Purpose:   Implementation of parallel count sort with OpenMP
+/* File:    lab3part4.c
+ * Purpose: Implementation of parallel count sort with OpenMP
  *
- * Compile:   gcc -...
- *            *needs timer.h for taking timings
+ * Compile: gcc -...
+ *          *needs timer.h for taking timings
  *
- * Run:      ./lab3part4 <thread_count> <n>
+ * Run:     ./lab3part4 <thread_count> <n>
  *
  * Input:   none
  * Output:  runtime of serial count sort
@@ -29,70 +29,70 @@ void Print_data(int a[], int n, char msg[]);
 int  Check_sort(int a[], int n);
 
 int main(int argc, char* argv[]) {
-   int n, thread_count;
-   int *a, *copy;
-   double start, stop;
-   
-   /* Check and get command line args */
-   if (argc != 3) Usage(argv[0]);
-   Get_args(argv, &thread_count, &n);
-   
-   /* Allocate storage and generate data for a */
-   a = malloc(n*sizeof(int));
-   Gen_data(a, n);
-   
-   /* Allocate storage for copy */
-   copy = malloc(n*sizeof(int));
-   
-   /* Serial count sort */
-   memcpy(copy, a, n*sizeof(int));
-#  ifdef DEBUG   
-   Print_data(copy, n, "Original: Serial sort a");
+    int n, thread_count;
+    int *a, *copy;
+    double start, stop;
+    
+    /* Check and get command line args */
+    if (argc != 3) Usage(argv[0]);
+    Get_args(argv, &thread_count, &n);
+    
+    /* Allocate storage and generate data for a */
+    a = malloc(n*sizeof(int));
+    Gen_data(a, n);
+    
+    /* Allocate storage for copy */
+    copy = malloc(n*sizeof(int));
+    
+    /* Serial count sort */
+    memcpy(copy, a, n*sizeof(int));
+#  ifdef DEBUG
+    Print_data(copy, n, "Original: Serial sort a");
 #  endif
-   GET_TIME(start);
-   Count_sort_serial(copy, n);
-   GET_TIME(stop);
-#  ifdef DEBUG   
-   Print_data(copy, n, "Sorted: Serial sort a");
+    GET_TIME(start);
+    Count_sort_serial(copy, n);
+    GET_TIME(stop);
+#  ifdef DEBUG
+    Print_data(copy, n, "Sorted: Serial sort a");
 #  endif
-   if (!Check_sort(copy, n))
-      printf("Serial sort failed\n");
-   printf("Serial run time: %e\n\n", stop-start);
+    if (!Check_sort(copy, n))
+        printf("Serial sort failed\n");
+    printf("Serial run time: %e\n\n", stop-start);
 
-   /* Parallel count sort */
-   memcpy(copy, a, n*sizeof(int));
-#  ifdef DEBUG   
-   Print_data(copy, n, "Original: Parallel qsort a");
+    /* Parallel count sort */
+    memcpy(copy, a, n*sizeof(int));
+#  ifdef DEBUG
+    Print_data(copy, n, "Original: Parallel qsort a");
 #  endif
-   GET_TIME(start);
-   Count_sort_parallel(copy, n, thread_count);
-   GET_TIME(stop);
-#  ifdef DEBUG   
-   Print_data(copy, n, "Sorted: Parallel sort a");
+    GET_TIME(start);
+    Count_sort_parallel(copy, n, thread_count);
+    GET_TIME(stop);
+#  ifdef DEBUG
+    Print_data(copy, n, "Sorted: Parallel sort a");
 #  endif
-   if (!Check_sort(copy, n))
-      printf("Parallel sort failed\n");
-   printf("Parallel run time: %e\n\n", stop-start);   
-   
-   /* qsort library */
-   memcpy(copy, a, n*sizeof(int));
-#  ifdef DEBUG   
-   Print_data(copy, n, "Original: Library qsort a");
+    if (!Check_sort(copy, n))
+        printf("Parallel sort failed\n");
+    printf("Parallel run time: %e\n\n", stop-start);   
+    
+    /* qsort library */
+    memcpy(copy, a, n*sizeof(int));
+#  ifdef DEBUG
+    Print_data(copy, n, "Original: Library qsort a");
 #  endif   
-   GET_TIME(start);
-   Library_qsort(copy, n);
-   GET_TIME(stop);
-#  ifdef DEBUG   
-   Print_data(copy, n, "Sorted: Library qsort a");
+    GET_TIME(start);
+    Library_qsort(copy, n);
+    GET_TIME(stop);
+#  ifdef DEBUG
+    Print_data(copy, n, "Sorted: Library qsort a");
 #  endif
-   if (!Check_sort(copy, n))
-      printf("Library sort failed\n");
-   printf("qsort run time: %e\n", stop-start);   
+    if (!Check_sort(copy, n))
+        printf("Library sort failed\n");
+    printf("qsort run time: %e\n", stop-start);   
 
-   free(a);
-   free(copy);
-   
-   return 0;
+    free(a);
+    free(copy);
+    
+    return 0;
 }  /* main */
 
 /*---------------------------------------------------------------------
@@ -101,8 +101,8 @@ int main(int argc, char* argv[]) {
  * In arg:    prog_name:  the name of the program from the command line
  */
 void Usage(char prog_name[]) {
-   fprintf(stderr, "usage: %s <thread_count> <n>\n", prog_name);
-   exit(0);
+    fprintf(stderr, "usage: %s <thread_count> <n>\n", prog_name);
+    exit(0);
 }  /* Usage */
 
 
@@ -114,8 +114,8 @@ void Usage(char prog_name[]) {
  *            n_p: number of elements
  */
 void Get_args(char* argv[], int* thread_count_p, int* n_p) {
-   *thread_count_p = strtol(argv[1], NULL, 10);
-   *n_p = strtol(argv[2], NULL, 10);
+    *thread_count_p = strtol(argv[1], NULL, 10);
+    *n_p = strtol(argv[2], NULL, 10);
 }  /* Get_args */
 
 
@@ -127,13 +127,13 @@ void Get_args(char* argv[], int* thread_count_p, int* n_p) {
  */
 
 void Gen_data(int a[], int n) {
-   int i;
-   
-   for (i = 0; i < n; i++)
-      a[i] = random() % n + 1; // (double) RAND_MAX;
+    int i;
+
+    for (i = 0; i < n; i++)
+        a[i] = random() % n + 1; // (double) RAND_MAX;
 
 #  ifdef DEBUG
-   Print_data(a, n, "a");
+    Print_data(a, n, "a");
 #  endif
 }  /* Gen_data */
 
@@ -146,21 +146,24 @@ void Gen_data(int a[], int n) {
  */
 
 void Count_sort_serial(int a[], int n) {
-   int i, j, count;
-   int* temp = malloc(n*sizeof(int));
-   
-   for (i = 0; i < n; i++) {
-      count = 0;
-      for (j = 0; j < n; j++) 
-         if (a[j] < a[i])
-            count++;
-         else if (a[j] == a[i] && j < i)
-            count++;
-      temp[count] = a[i];
-   }
-   
-   memcpy(a, temp, n*sizeof(int));
-   free(temp);
+    int i, j, count;
+    int* temp = malloc(n*sizeof(int));
+    
+    for (i = 0; i < n; i++) {
+        count = 0;
+        for (j = 0; j < n; j++) {
+            if (a[j] < a[i]) {
+                count++;
+            }
+            else if (a[j] == a[i] && j < i) {
+                count++;
+            }
+        }
+        temp[count] = a[i];
+    }
+    
+    memcpy(a, temp, n*sizeof(int));
+    free(temp);
 }  /* Count_sort_serial */
 
 
@@ -172,21 +175,26 @@ void Count_sort_serial(int a[], int n) {
  */
 
 void Count_sort_parallel(int a[], int n, int thread_count) {
-   int i, j, count;
-   int* temp = malloc(n*sizeof(int));
+    int i, j, count;
+    int* temp = malloc(n*sizeof(int));
 
-      for (i = 0; i < n; i++) {
-         count = 0;
-         for (j = 0; j < n; j++) 
-            if (a[j] < a[i])
-               count++;
-            else if (a[j] == a[i] && j < i)
-               count++;
-         temp[count] = a[i];
-      }
+    #pragma omp parallel for num_threads(thread_count) private(count, j)
 
-   memcpy(a, temp, n*sizeof(int));
-   free(temp);
+    for (i = 0; i < n; i++) {
+        count = 0;
+        for (j = 0; j < n; j++) {
+            if (a[j] < a[i]) {
+                count++;
+            }
+            else if (a[j] == a[i] && j < i) {
+                count++;
+            }
+        }
+        temp[count] = a[i];
+    }
+
+    memcpy(a, temp, n*sizeof(int));
+    free(temp);
 }  /* Count_sort_parallel */
 
 /*---------------------------------------------------------------------
@@ -197,7 +205,7 @@ void Count_sort_parallel(int a[], int n, int thread_count) {
  */
 
 void Library_qsort(int a[], int n) {
-   qsort(a, n, sizeof(int), My_compare);
+    qsort(a, n, sizeof(int), My_compare);
 }  /* Library_qsort */
 
 /*---------------------------------------------------------------------
@@ -207,10 +215,10 @@ void Library_qsort(int a[], int n) {
  * Return val:   positive if a > b, negative if b > a, 0 if equal
  */
 int My_compare(const void* a, const void* b) {
-   const int* int_a = (const int*) a;
-   const int* int_b = (const int*) b;
-   
-   return (*int_a - *int_b);
+    const int* int_a = (const int*) a;
+    const int* int_b = (const int*) b;
+    
+    return (*int_a - *int_b);
 }  /* My_compare */
 
 
@@ -223,12 +231,12 @@ int My_compare(const void* a, const void* b) {
  */
 
 void Print_data(int a[], int n, char msg[]) {
-   int i;
+    int i;
 
-   printf("%s = ", msg);
-   for (i = 0; i < n; i++)
-      printf("%d ", a[i]);
-   printf("\n");
+    printf("%s = ", msg);
+    for (i = 0; i < n; i++)
+        printf("%d ", a[i]);
+    printf("\n");
 }  /* Print_data */
 
 
@@ -241,9 +249,9 @@ void Print_data(int a[], int n, char msg[]) {
  */
 
 int  Check_sort(int a[], int n) {
-   int i;
+    int i;
 
-   for (i = 1; i < n; i++)
-      if (a[i-1] > a[i]) return 0;
-   return 1;
+    for (i = 1; i < n; i++)
+        if (a[i-1] > a[i]) return 0;
+    return 1;
 }  /* Check_sort */

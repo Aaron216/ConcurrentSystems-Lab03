@@ -36,81 +36,81 @@ void Print_mat(char title[], double A[], int n);
 void Print_vect(char title[], double x[], int n);
 
 int main(int argc, char* argv[]) {
-   int n, thread_count;
-   double *A, *b, *x;
-   double ge_start, ge_finish, bs_start, bs_finish, start, finish;
+    int n, thread_count;
+    double *A, *b, *x;
+    double ge_start, ge_finish, bs_start, bs_finish, start, finish;
 
-   Get_args(argc, argv, &thread_count, &n);
+    Get_args(argc, argv, &thread_count, &n);
 
-   A = malloc(n*n*sizeof(double));
-   b = malloc(n*sizeof(double));
-   x = malloc(n*sizeof(double));
+    A = malloc(n*n*sizeof(double));
+    b = malloc(n*sizeof(double));
+    x = malloc(n*sizeof(double));
 
-   Init(A, b, x, n);
+    Init(A, b, x, n);
 #  ifdef DEBUG
-   Print_mat("A = ", A, n);
-   Print_vect("b = ", b, n);
+    Print_mat("A = ", A, n);
+    Print_vect("b = ", b, n);
 #  endif
 
-   ge_start = start = omp_get_wtime();
-   Gaussian_elim(A, b, n, thread_count);
-   ge_finish = bs_start = omp_get_wtime();
+    ge_start = start = omp_get_wtime();
+    Gaussian_elim(A, b, n, thread_count);
+    ge_finish = bs_start = omp_get_wtime();
 #  ifdef DEBUG
-   Print_mat("Triangular system = ", A, n);
-   Print_vect("Updated RHS = ", b, n);
+    Print_mat("Triangular system = ", A, n);
+    Print_vect("Updated RHS = ", b, n);
 #  endif
 
-   Row_solve(A, b, x, n, thread_count); 
-   bs_finish = finish = omp_get_wtime();
-   printf("Max error in solution = %e\n", Find_error(x,n));
-   printf("Time for Gaussian elim = %e seconds\n", ge_finish-ge_start);
-   printf("Time for back sub = %e seconds\n", bs_finish-bs_start);
-   printf("Total time for solve = %e seconds\n", finish-start);
+    Row_solve(A, b, x, n, thread_count); 
+    bs_finish = finish = omp_get_wtime();
+    printf("Max error in solution = %e\n", Find_error(x,n));
+    printf("Time for Gaussian elim = %e seconds\n", ge_finish-ge_start);
+    printf("Time for back sub = %e seconds\n", bs_finish-bs_start);
+    printf("Total time for solve = %e seconds\n", finish-start);
 #  ifdef DEBUG
-   Print_vect("Solution =", x, n);
+    Print_vect("Solution =", x, n);
 #  endif
 
-   free(A);
-   free(b);
-   free(x);
+    free(A);
+    free(b);
+    free(x);
 
-   return 0;
+    return 0;
 }  /* main */
 
 /*--------------------------------------------------------------------*/
 void Get_args(int argc, char* argv[], int* thread_count_p, int* n_p) {
-   if (argc != 3) {
-      fprintf(stderr, "usage: %s <thread_count> <n>\n", argv[0]);
-      exit(0);
-   }
-   *thread_count_p = strtol(argv[1], NULL, 10);
-   *n_p = strtol(argv[2], NULL, 10);
+    if (argc != 3) {
+        fprintf(stderr, "usage: %s <thread_count> <n>\n", argv[0]);
+        exit(0);
+    }
+    *thread_count_p = strtol(argv[1], NULL, 10);
+    *n_p = strtol(argv[2], NULL, 10);
 }  /* Get_args */
 
 
 /*--------------------------------------------------------------------*/
 void Init(double A[], double b[], double x[], int n) {
-   int i, j;
+    int i, j;
 
-   for (i = 0; i < n; i++)
-      x[i] = 1.0;
+    for (i = 0; i < n; i++)
+        x[i] = 1.0;
 
-   srandom(1);
-   for (i = 0; i < n; i++) {
-      for (j = 0; j < n; j++)
-         if (i != j) 
-            A[i*n + j] = random()/((double) RAND_MAX);
-         else
-            A[i*n+i] = n/10.0;
-   }
+    srandom(1);
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++)
+            if (i != j) 
+                A[i*n + j] = random()/((double) RAND_MAX);
+            else
+                A[i*n+i] = n/10.0;
+    }
 
-   for (i = 0; i < n; i++) {
-      b[i] = 0;
-      for (j = 0; j < n; j++)
-         b[i] += A[i*n + j]*x[j];
-   }
+    for (i = 0; i < n; i++) {
+        b[i] = 0;
+        for (j = 0; j < n; j++)
+            b[i] += A[i*n + j]*x[j];
+    }
 
-   memset(x, 0, n*sizeof(double));
+    memset(x, 0, n*sizeof(double));
 }  /* Init */
 
 
@@ -121,18 +121,20 @@ void Init(double A[], double b[], double x[], int n) {
  * In/out args:  A, b
  * Note:         It's assumed that row-swaps aren't necessary
  */
-void Gaussian_elim(double A[], double b[], int n, int thread_count){
-   int i, j, k;
-   double fact;
+void Gaussian_elim(double A[], double b[], int n, int thread_count) {
+    int i, j, k;
+    double fact;
 
-   for (i = 0; i < n-1; i++)
-      for (k = i+1; k < n; k++) {
-         fact = -A[k*n + i]/A[i*n + i];
-         A[k*n + i] = 0;
-         for (j = i+1; j < n; j++)
-            A[k*n + j] += fact*A[i*n + j];
-         b[k] += fact*b[i];
-      }
+    for (i = 0; i < n-1; i++) {
+        #pragma omp parallel for num_threads(thread_count) private(j, fact)
+        for (k = i+1; k < n; k++) {
+            fact = -A[k*n + i]/A[i*n + i];
+            A[k*n + i] = 0;
+            for (j = i+1; j < n; j++)
+                A[k*n + j] += fact*A[i*n + j];
+            b[k] += fact*b[i];
+        }
+    }
 }  /* Gaussian_elim */
 
 /*--------------------------------------------------------------------
@@ -142,55 +144,60 @@ void Gaussian_elim(double A[], double b[], int n, int thread_count){
  * Out arg:   x
  */
 void Row_solve(double A[], double b[], double x[], int n, int thread_count) {
-   int i, j;
-   double tmp;
+    int i, j;
+    double tmp;
 
-   for (i = n-1; i >= 0; i--) {
-      tmp = b[i];
-      for (j = i+1; j < n; j++)
-         tmp += -A[i*n+j]*x[j];
-      {
-         x[i] = tmp/A[i*n+i];
-#        ifdef DEBUG
-         printf("x[%d] = %.1f\n", i, x[i]);
-#        endif
-      }
-   }
-}  /* Row_solve */
+    #pragma omp parallel num_threads(thread_count) private(i, j)
+    for (i = n-1; i >= 0; i--) {
+        #pragma omp single
+        tmp = b[i];
+        #pragma omp for reduction(+: tmp)
+        for (j = i+1; j < n; j++) {
+            tmp += -A[i*n+j]*x[j];
+        }
+        #pragma omp single
+        {
+            x[i] = tmp/A[i*n+i];
+            #ifdef DEBUG
+                printf("x[%d] = %.1f\n", i, x[i]);
+            #endif
+        }
+    }
+}   /* Row_solve */
 
 /*--------------------------------------------------------------------*/
 double Find_error(double x[], int n) {
-   int i;
-   double error = 0.0, tmp;
+    int i;
+    double error = 0.0, tmp;
 
-   for (i = 0; i < n; i++) {
-      tmp = fabs(x[i] - 1.0);
-      if (tmp > error) error = tmp;
-   }
-   return error;
+    for (i = 0; i < n; i++) {
+        tmp = fabs(x[i] - 1.0);
+        if (tmp > error) error = tmp;
+    }
+    return error;
 }  /* Find_error */
 
 
 /*--------------------------------------------------------------------*/
 void Print_mat(char title[], double A[], int n) {
-   int i, j;
+    int i, j;
 
-   printf("%s:\n", title);
-   for (i = 0; i < n; i++) {
-      for (j = 0; j < n; j++)
-         printf("%4.1f ", A[i*n+j]);
-      printf("\n");
-   }
-   printf("\n");
+    printf("%s:\n", title);
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++)
+            printf("%4.1f ", A[i*n+j]);
+        printf("\n");
+    }
+    printf("\n");
 }  /* Print_mat */
 
 
 /*--------------------------------------------------------------------*/
 void Print_vect(char title[], double x[], int n) {
-   int i;
+    int i;
 
-   printf("%s ", title);
-   for (i = 0; i < n; i++)
-      printf("%.1f ", x[i]);
-   printf("\n");
+    printf("%s ", title);
+    for (i = 0; i < n; i++)
+        printf("%.1f ", x[i]);
+    printf("\n");
 }  /* Print_vect */
